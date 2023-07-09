@@ -11,9 +11,17 @@ You can use the scripts listed on this tab to streamline administrative tasks us
 
 ### Maintenance Scripts
 
+#### Add-CippUser.ps1
+
+This script adds a mew user.
+
 #### Clear-TokenCache.ps1
 
-This script automates the [Clear Token Cache](../../../general/troubleshooting/#clear-token-cache) troubleshooting task.
+This script automates the [Clear Token Cache](https://docs.cipp.app/troubleshooting/troubleshooting#clear-token-cache) troubleshooting task.
+
+#### Enable-FunctionAppGitHubActions.ps1
+
+TBC
 
 #### Grant-CippConditionalAccess.ps1
 
