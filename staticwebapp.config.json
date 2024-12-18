@@ -20,7 +20,7 @@
     },
     {
       "route": "/logout",
-      "redirect": "/.auth/logout"
+      "redirect": "/.auth/logout?post_logout_redirect_uri=/LogoutRedirect"
     },
     {
       "route": "/api/ExecSAMSetup",
@@ -29,6 +29,10 @@
     {
       "route": "/api/AddStandardsDeploy",
       "allowedRoles": ["admin"]
+    },
+    {
+      "route": "/LogoutRedirect",
+      "allowedRoles": ["admin", "editor", "readonly", "authenticated", "anonymous"]
     },
     {
       "route": "/404",
@@ -75,6 +79,10 @@
       "allowedRoles": ["admin", "editor", "readonly", "reader", "authenticated", "anonymous"]
     },
     {
+      "route": "/api/Public*",
+      "allowedRoles": ["admin", "editor", "readonly", "reader", "authenticated", "anonymous"]
+    },
+    {
       "route": "*",
       "allowedRoles": ["admin", "editor", "readonly", "reader"]
     }
@@ -95,7 +103,7 @@
     }
   },
   "globalHeaders": {
-    "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'; img-src 'self' data: *"
+    "content-security-policy": "default-src https: blob: 'unsafe-eval' 'unsafe-inline'; object-src 'self' blob:; img-src 'self' blob: data: *"
   },
   "mimeTypes": {
     ".json": "text/json"
