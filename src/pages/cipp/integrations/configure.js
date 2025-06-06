@@ -43,6 +43,8 @@ const Page = () => {
   const integrations = ApiGetCall({
     url: "/api/ListExtensionsConfig",
     queryKey: "Integrations",
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const [testQuery, setTestQuery] = useState({ url: "", waiting: false, queryKey: "" });
@@ -152,7 +154,13 @@ const Page = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => handleIntegrationTest()}
-                    disabled={actionTestResults?.isLoading}
+                    disabled={
+                      actionTestResults?.isLoading ||
+                      (extension?.SettingOptions?.find(
+                        (setting) => setting?.name === `${extension.id}.Enabled`
+                      ) &&
+                        integrations?.data?.[extension.id]?.Enabled !== true)
+                    }
                   >
                     <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
                       <BeakerIcon />
@@ -167,7 +175,13 @@ const Page = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => handleIntegrationSync()}
-                    disabled={actionSyncResults.isLoading}
+                    disabled={
+                      actionSyncResults.isLoading ||
+                      (extension?.SettingOptions?.find(
+                        (setting) => setting?.name === `${extension.id}.Enabled`
+                      ) &&
+                        integrations?.data?.[extension.id]?.Enabled !== true)
+                    }
                   >
                     <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
                       <ArrowPathIcon />
