@@ -158,7 +158,11 @@ export const CippAutoComplete = (props) => {
             label:
               typeof api?.labelField === "function"
                 ? api.labelField(option)
-                : option[api?.labelField],
+                : option[api?.labelField]
+                ? option[api?.labelField]
+                : option[api?.altLabelField] ||
+                  option[api?.valueField] ||
+                  "No label found - Are you missing a labelField?",
             value:
               typeof api?.valueField === "function"
                 ? api.valueField(option)
@@ -166,18 +170,11 @@ export const CippAutoComplete = (props) => {
             addedFields,
           };
         });
-        setUsedOptions(convertedOptions);
-        if (preselectedValue && !defaultValue && !value && convertedOptions.length > 0) {
-          const preselectedOption = convertedOptions.find(
-            (option) => option.value === preselectedValue
-          );
 
-          if (preselectedOption) {
-            const newValue = multiple ? [preselectedOption] : preselectedOption;
-            if (onChange) {
-              onChange(newValue, newValue?.addedFields);
-            }
-          }
+        if (api?.dataFilter) {
+          setUsedOptions(api.dataFilter(convertedOptions));
+        } else {
+          setUsedOptions(convertedOptions);
         }
       }
     }
@@ -206,13 +203,45 @@ export const CippAutoComplete = (props) => {
       finalOptions.sort((a, b) => a.label?.localeCompare(b.label));
     }
     return finalOptions;
-  }, [api, usedOptions, options, removeOptions]);
+  }, [api, usedOptions, options, removeOptions, sortOptions]);
 
-  const rand = Math.random().toString(36).substring(5);
+  // Dedicated effect for handling preselected value
+  useEffect(() => {
+    if (preselectedValue && !defaultValue && !value && memoizedOptions.length > 0) {
+      const preselectedOption = memoizedOptions.find((option) => option.value === preselectedValue);
+
+      if (preselectedOption) {
+        const newValue = multiple ? [preselectedOption] : preselectedOption;
+        if (onChange) {
+          onChange(newValue, newValue?.addedFields);
+        }
+      }
+    }
+  }, [preselectedValue, defaultValue, value, memoizedOptions, multiple, onChange]);
+
+  // Create a stable key that only changes when necessary inputs change
+  const stableKey = useMemo(() => {
+    // Only regenerate the key when these values change
+    const keyParts = [
+      JSON.stringify(defaultValue),
+      JSON.stringify(preselectedValue),
+      api?.url,
+      currentTenant,
+    ];
+    return keyParts.join("-");
+  }, [defaultValue, preselectedValue, api?.url, currentTenant]);
+
+  const lookupOptionByValue = useCallback(
+    (value) => {
+      const foundOption = memoizedOptions.find((option) => option.value === value);
+      return foundOption || { label: value, value: value };
+    },
+    [memoizedOptions]
+  );
 
   return (
     <Autocomplete
-      key={`${defaultValue}-${rand}`}
+      key={stableKey}
       disabled={disabled || actionGetRequest.isFetching || isFetching}
       popupIcon={
         actionGetRequest.isFetching || isFetching ? (
@@ -236,19 +265,28 @@ export const CippAutoComplete = (props) => {
             (option) => params.inputValue === option.value || params.inputValue === option.label
           );
         if (params.inputValue !== "" && creatable && !isExisting) {
-          filtered.push({
+          const newOption = {
             label: `Add option: "${params.inputValue}"`,
             value: params.inputValue,
             manual: true,
-          });
+          };
+          if (!filtered.some((option) => option.value === newOption.value)) {
+            filtered.push(newOption);
+          }
         }
 
         return filtered;
       }}
       size="small"
       defaultValue={
-        typeof defaultValue === "string"
-          ? { label: defaultValue, value: defaultValue }
+        Array.isArray(defaultValue)
+          ? defaultValue.map((item) =>
+              typeof item === "string" ? lookupOptionByValue(item) : item
+            )
+          : typeof defaultValue === "object" && multiple
+          ? [defaultValue]
+          : typeof defaultValue === "string"
+          ? lookupOptionByValue(defaultValue)
           : defaultValue
       }
       name={name}
@@ -290,13 +328,20 @@ export const CippAutoComplete = (props) => {
       }}
       options={memoizedOptions}
       getOptionLabel={useCallback(
-        (option) =>
-          option
-            ? option.label === null
-              ? ""
-              : option.label || "Label not found - Are you missing a labelField?"
-            : "",
-        []
+        (option) => {
+          if (!option) return "";
+          // For static options (non-API), the option should already have a label
+          if (!api && option.label !== undefined) {
+            return option.label === null ? "" : String(option.label);
+          }
+          // For API options, use the existing logic
+          if (api) {
+            return option.label === null ? "" : option.label || "Label not found - Are you missing a labelField?";
+          }
+          // Fallback for any edge cases
+          return option.label || option.value || "";
+        },
+        [api]
       )}
       sx={sx}
       renderInput={(params) => (
