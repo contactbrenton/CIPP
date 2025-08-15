@@ -10,9 +10,12 @@ import {
   NoAccounts,
 } from "@mui/icons-material";
 import Link from "next/link";
+import { CippDataTable } from "/src/components/CippTable/CippDataTable";
+import { useSettings } from "/src/hooks/use-settings";
 
 const Page = () => {
   const pageTitle = "SharePoint Sites";
+  const tenantFilter = useSettings().currentTenant;
 
   const actions = [
     {
@@ -35,12 +38,21 @@ const Page = () => {
           multiple: false,
           creatable: false,
           api: {
-            url: "/api/listUsers",
+            url: "/api/ListGraphRequest",
+            data: {
+              Endpoint: "users",
+              $select: "id,displayName,userPrincipalName",
+              $top: 999,
+              $count: true,
+            },
+            queryKey: "ListUsersAutoComplete",
+            dataKey: "Results",
             labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
             valueField: "userPrincipalName",
             addedField: {
               id: "id",
             },
+            showRefresh: true,
           },
         },
       ],
@@ -66,12 +78,21 @@ const Page = () => {
           multiple: false,
           creatable: false,
           api: {
-            url: "/api/listUsers",
+            url: "/api/ListGraphRequest",
+            data: {
+              Endpoint: "users",
+              $select: "id,displayName,userPrincipalName",
+              $top: 999,
+              $count: true,
+            },
+            queryKey: "ListUsersAutoComplete",
+            dataKey: "Results",
             labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
             valueField: "userPrincipalName",
             addedField: {
               id: "id",
             },
+            showRefresh: true,
           },
         },
       ],
@@ -96,12 +117,21 @@ const Page = () => {
           multiple: false,
           creatable: false,
           api: {
-            url: "/api/listUsers",
+            url: "/api/ListGraphRequest",
+            data: {
+              Endpoint: "users",
+              $select: "id,displayName,userPrincipalName",
+              $top: 999,
+              $count: true,
+            },
+            queryKey: "ListUsersAutoComplete",
+            dataKey: "Results",
             labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
             valueField: "userPrincipalName",
             addedField: {
               id: "id",
             },
+            showRefresh: true,
           },
         },
       ],
@@ -126,12 +156,21 @@ const Page = () => {
           multiple: false,
           creatable: false,
           api: {
-            url: "/api/listUsers",
+            url: "/api/ListGraphRequest",
+            data: {
+              Endpoint: "users",
+              $select: "id,displayName,userPrincipalName",
+              $top: 999,
+              $count: true,
+            },
+            queryKey: "ListUsersAutoComplete",
+            dataKey: "Results",
             labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
             valueField: "userPrincipalName",
             addedField: {
               id: "id",
             },
+            showRefresh: true,
           },
         },
       ],
@@ -142,6 +181,24 @@ const Page = () => {
   const offCanvas = {
     extendedInfoFields: ["displayName", "description", "webUrl"],
     actions: actions,
+    children: (row) => (
+      <CippDataTable
+        title="Site Members"
+        queryKey={`site-members-${row.siteId}`}
+        api={{
+          url: "/api/ListGraphRequest",
+          data: {
+            Endpoint: `/sites/${row.siteId}/lists/User%20Information%20List/items`,
+            AsApp: "true",
+            expand: "fields",
+            tenantFilter: tenantFilter,
+          },
+          dataKey: "Results",
+        }}
+        simpleColumns={["fields.Title", "fields.EMail", "fields.IsSiteAdmin"]}
+      />
+    ),
+    size: "lg", // Make the offcanvas extra large
   };
 
   return (
